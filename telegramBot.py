@@ -1,10 +1,7 @@
 import telegram
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from datetime import datetime
-import numpy as numpy
 import argparse
-import imutils
-import cv2
 import requests
 import logging
 import json
