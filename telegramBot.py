@@ -7,15 +7,13 @@ import logging
 import json
 
 
+def load_json_path(path):
+    with open(path, "r") as f:
+        return json.load(f)
 
-
-uBase = open("userBase.json", "r")
-users = json.load(uBase)
-uBase.close()
-
-secretsFile = open("secrets.json", "r")
-secrets = json.load(secretsFile)
-secretsFile.close()
+user = load_json_path("userBase.json")
+secrets = load_json_path("secrets.json")
+prices = load_json_path("prices.json")
 
 userTIds = []
 for user in users:
@@ -27,8 +25,6 @@ url = secrets['url']
 def timestamp():
 	return datetime.today().strftime('%Y-%m-%d')
 
-
-prices ={'wasser':0.3, 'mate':0.5, 'bier':0.9}
 
 bot = telegram.Bot(token=secrets["botToken"])
 updater = Updater(token=secrets["botToken"], use_context=True)
