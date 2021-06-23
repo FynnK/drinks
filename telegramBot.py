@@ -11,7 +11,7 @@ def load_json_path(path):
     with open(path, "r") as f:
         return json.load(f)
 
-user = load_json_path("userBase.json")
+users = load_json_path("userBase.json")
 secrets = load_json_path("secrets.json")
 prices = load_json_path("prices.json")
 
