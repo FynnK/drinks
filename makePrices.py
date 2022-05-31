@@ -3,9 +3,8 @@ import json
 import math
 
 pdf_path = "https://ftp.hadiko.de/int/hadiko/diverses/gema/Preisliste.pdf"
-pdf_lpath ="Preisliste.pdf"
 
-df = tabula.read_pdf(pdf_lpath, pages="all", stream=True)
+df = tabula.read_pdf(pdf_path, pages="all", stream=True)
 
 prices = {}
 sizes = {}
