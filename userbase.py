@@ -58,6 +58,12 @@ class Userbase:
         for user in self.users:
             list.append(user.tid)
         return list
+
+    def get_names(self):
+        list = []
+        for user in self.users:
+            list.append(user.name)
+        return list
     
     def has_user(self, user):
         return user in self.get_users()
@@ -78,6 +84,11 @@ class Userbase:
         if not (self.tid_taken(tid)):
             return print("Error, tid not taken")            
         return next(u for u in self.users if u.tid == tid)
+
+    def user_from_name(self, name):
+        if not name in self.get_names():
+            return print("Error, name not taken")            
+        return next(u for u in self.users if u.name == name)
 
     def add_user_from_json(self, json):
         for user in json:
@@ -101,19 +112,3 @@ class Userbase:
             users.append(user.get_as_dict())
         json.dump(users, file)
         file.close()
-
-def load_json_path(path):
-    with open(path, "r") as f:
-        return json.load(f)
-
-secrets = load_json_path("secrets.json")
-u = Userbase()
-u.load_json_from_path("mybase.json")
-u.load_from_url(secrets)
-
-
-for user in u.get_users():
-    print(user)
-u.dump_json_to_path("mybase.json")
-
-

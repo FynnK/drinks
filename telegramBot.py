@@ -6,23 +6,24 @@ import argparse
 import requests
 import logging
 import json
+import userbase
 
 
 def load_json_path(path):
     with open(path, "r") as f:
         return json.load(f)
 
-users = load_json_path("userBase.json")
 secrets = load_json_path("secrets.json")
 prices = load_json_path("prices.json")
 db = load_json_path("priceDB.json")
 
-userTIds = []
-for user in users:
-	userTIds.append(user.get('tId'))
+ubase = userbase.Userbase()
+ubase.load_from_url(secrets)
+print(ubase.get_users())
+
+
 for entry in db:
     prices[entry["name"]] = entry["price"]
-
 
 url = secrets['url']
 
@@ -57,11 +58,9 @@ class Bot:
     def run(self):
        
         start_handler = CommandHandler('start', self.start)
-        setUserName_handler = CommandHandler('setUserName', self.setUserName)
+        setUserName_handler = CommandHandler('setUserName', self.register)
         checkBalance_handler = CommandHandler('checkBalance', self.checkBalance)
         message_handler = MessageHandler(Filters.text, self.message)
-
-
 
         dispatcher.add_handler(CallbackQueryHandler(self.button))
         dispatcher.add_handler(start_handler)
@@ -79,7 +78,7 @@ class Bot:
                 preisMsg+=key + ': '+str(prices[key])+' Euro \n'
             context.bot.send_message(chat_id=update.effective_chat.id, text=preisMsg)
         if update.message.text in 'wasser':
-            payed_for = next(item for item in users if item["tId"] == update.message.from_user.id)["id"]
+            payed_for = ubase.user_from_tid(update.message.from_user.id).id
             myobj = {'date':timestamp(), 'what':'wasser', 'payer':'1', 'payed_for':payed_for,'amount':prices["wasser"]}
             r = requests.post(url+'/api/projects/'+secrets['project']+'/bills', data = myobj, auth=(secrets['project'],secrets['password']))
             context.bot.send_message(chat_id=update.effective_chat.id, text="you just bought some watah")
@@ -95,19 +94,29 @@ class Bot:
         print(obj["members"])
 
 
+
+    def register(self, update, context):
+        tid = update.message.from_user.id
+        if len(context.args) != 2:
+            context.bot.send_message(chat_id=update.effective_chat.id, text="Username should be: 'RoomNumber Firstname' for example i416 Soma")
+            return
+        uname = context.args[0] + ' '+ context.args[1]
+        ubase.user_from_name(uname).set_telegramdata(update.message.from_user.id,update.message.chat.first_name)
+        context.bot.send_message(chat_id=update.effective_chat.id, text="Username: "+uname+"  TelegramId: "+str(tid))
+        ubase.dump_json_to_path("mybase.json")
+
     def setUserName(self, update, context):
         if len(context.args) != 2:
             context.bot.send_message(chat_id=update.effective_chat.id, text="Username should be: 'RoomNumber Firstname' for example i416 Soma")
             return
         uname = context.args[0] + ' '+ context.args[1]
-        curUser = next((item for item in users if item["name"] == uname), 'none')
+        curUser = next((item for item in users if item["name"] == uname), 'None')
         if type(curUser) is type(''):
             context.bot.send_message(chat_id=update.effective_chat.id, text="Invalid user, please register in ihatemoney("+secrets["url"]+") or check Spelling")
             return
         if curUser["tId"] == -1:
             curUser["tId"] = update.message.from_user.id
             curUser["tName"] = update.message.chat.first_name
-            userTIds.append(update.message.from_user.id)
         else:
             context.bot.send_message(chat_id=update.effective_chat.id, text="error")
             return
@@ -118,7 +127,7 @@ class Bot:
         uBase.close()
 
     def start(self, update, context):
-        if update.message.from_user.id not in userTIds:
+        if update.message.from_user.id not in ubase.get_tids():
                 context.bot.send_message(chat_id=update.effective_chat.id, text='Hello '+update.message.chat.first_name+ ', please send me: /setUserName RoomNumber Username')
         else:
             """Sends a message with three inline buttons attached."""
@@ -134,7 +143,7 @@ class Bot:
             query.edit_message_text(text=f"Cancelled")
         else:
             query.edit_message_text(text=f"Purchased 1: {query.data}")
-            payed_for = next(item for item in users if item["tId"] ==  query.from_user.id)["id"]
+            payed_for = ubase.user_from_tid(query.from_user.id).id
             myobj = {'date':timestamp(), 'what':query.data, 'payer':'34', 'payed_for':payed_for,'amount':prices[query.data]}
             r = requests.post(url+'/api/projects/'+secrets['project']+'/bills', data = myobj, auth=(secrets['project'],secrets['password']))
             context.bot.send_message(chat_id=update.effective_chat.id, text=r.text)
