@@ -32,7 +32,7 @@ for user in rechnung["Bewohner"]:
 	for item in user["Items"]:
 		amount = user["Items"][item]
 		total = round(amount * next(thing for thing in db if thing["name"] ==  item)["price"], 2)
-		myobj = {'date':timestamp(), 'what':item, 'payer':'1', 'payed_for':payed_for,'amount':total}
+		myobj = {'date':timestamp(), 'what':item + " (" + str(amount) + ")", 'payer':'1', 'payed_for':payed_for,'amount':total}
 		print(myobj)
 		if (total > 0.1):
 		    r = requests.post(url+'/api/projects/'+secrets['project']+'/bills', data = myobj, auth=(secrets['project'],secrets['password']))
